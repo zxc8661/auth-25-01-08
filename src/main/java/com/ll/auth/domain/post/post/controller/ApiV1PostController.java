@@ -95,32 +95,32 @@ public class ApiV1PostController {
             @Length(min = 2)
             String content,
             @NotNull
-            Long authorId
+            Long authorId,
+            @NotNull
+            @Length(min=2)
+            String password
     ) {
     }
 
-    record PostWriteResBody(
-            PostDto item,
-            Long totalCount
-    ) {
-    }
+
 
     @PostMapping
-    public RsData<PostWriteResBody> writeItem(
+    public RsData<PostDto> writeItem(
             @RequestBody @Valid PostWriteReqBody reqBody
     ) {
 //        Member actor = memberService.findByUsername("user3").get(); //이런식의 하드코딩은 좋지 않음
         Member actor = memberService.findById(reqBody.authorId).get();
 
+        if(actor.getPassword().equals( reqBody.password))
+            throw new ServiceException("401-1","비밀번호 일치 X ");
+
         Post post = postService.write(actor, reqBody.title, reqBody.content);
+
 
         return new RsData<>(
                 "201-1",
                 "%d번 글이 작성되었습니다.".formatted(post.getId()),
-                new PostWriteResBody(
-                        new PostDto(post),
-                        postService.count()
-                )
+                new PostDto(post)
         );
     }
 }
